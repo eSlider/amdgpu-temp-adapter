@@ -1,0 +1,15 @@
+# Build output
+/bin/
+/dist/
+ryzenadj-governor
+*.exe
+
+# Test / coverage
+*.out
+coverage.txt
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

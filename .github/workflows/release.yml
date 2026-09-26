@@ -1,0 +1,104 @@
+name: Release
+
+# Triggered by version tags created by release-please (or pushed manually).
+# Builds static Linux binaries for amd64/arm64, packs tarballs + checksums and
+# attaches them to the GitHub Release for the tag.
+#
+# Why an explicit matrix instead of GoReleaser: the build is a single
+# CGO-free `go build`, so a matrix is transparent, has no extra config to
+# rot, and only uses first-party actions. GoReleaser is a great fit for
+# multi-project/multi-arch release matrices; here it would add a dependency
+# and a config file without adding capability.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)release"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build linux/${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build and package
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG}"
+          commit="$(git rev-parse --short=12 HEAD)"
+          date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          name="ryzenadj-governor_${version}_linux_${GOARCH}"
+          out="dist/${name}"
+          mkdir -p "${out}"
+          go build -trimpath \
+            -ldflags "-s -w -X main.Version=${version} -X main.Commit=${commit} -X main.Date=${date}" \
+            -o "${out}/ryzenadj-governor" ./cmd/ryzenadj-governor
+          cp README.md LICENSE "${out}/"
+          tar -C dist -czf "dist/${name}.tar.gz" "${name}"
+          (cd dist && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256")
+          echo "built dist/${name}.tar.gz"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.goarch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum *.tar.gz > sha256sums.txt
+          cat sha256sums.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/sha256sums.txt
+          fail_on_unmatched_files: true
