@@ -1,7 +1,8 @@
 # Build output
 /bin/
 /dist/
-ryzenadj-governor
+# Only ignore a binary built at the repo root, NOT the cmd/ryzenadj-governor directory.
+/ryzenadj-governor
 *.exe
 
 # Test / coverage
