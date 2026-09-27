@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A small Linux-only thermal governor for AMD APUs. It keeps the SoC cool during
-long GPU batches (Vulkan inference, Whisper, llama.cpp, …) using two mechanisms:
+long CPU/GPU batches (Vulkan inference, Whisper, llama.cpp, …) using two mechanisms:
 a **hardware temperature/power limit** applied through
 [FlyGoat/RyzenAdj](https://github.com/FlyGoat/RyzenAdj), and a **root-less
 closed-loop watchdog** that pauses/resumes a process group around temperature
