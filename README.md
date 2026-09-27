@@ -12,6 +12,10 @@ a **hardware temperature/power limit** applied through
 closed-loop watchdog** that pauses/resumes a process group around temperature
 thresholds.
 
+
+<img width="1267" height="1094" alt="image" src="https://github.com/user-attachments/assets/55c484d6-0198-4456-b619-4de7043239b1" />
+
+
 > **Not the upstream project.** This is a *separate* utility (repo
 > `eSlider/ryzenadj`, binary `ryzenadj-governor`) from
 > [FlyGoat/RyzenAdj](https://github.com/FlyGoat/RyzenAdj). It does not talk to
