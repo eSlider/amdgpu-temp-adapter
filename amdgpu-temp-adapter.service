@@ -1,0 +1,16 @@
+[Unit]
+Description=Apply AMD Ryzen/APU package thermal policy (amdgpu-temp-adapter)
+# Host-level one-shot boot hook, not an application service: the SMU limits set
+# by ryzenadj reset on every reboot, so this re-applies them after boot.
+# GPU placement and other services are untouched.
+ConditionPathExists=/usr/local/bin/amdgpu-temp-adapter
+ConditionPathExists=/usr/local/bin/ryzenadj
+After=multi-user.target
+
+[Service]
+Type=oneshot
+# Moderate policy: Tctl cap 85C, PPT STAPM/SLOW/FAST 88/76/105 W.
+ExecStart=/usr/local/bin/amdgpu-temp-adapter apply
+
+[Install]
+WantedBy=multi-user.target
